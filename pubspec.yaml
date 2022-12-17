@@ -1,0 +1,45 @@
+name: test_db
+description: A new Flutter project.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.18.4 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  cupertino_icons: ^1.0.2
+  mysql_client: ^0.0.27
+  barcode_widget: ^2.0.3
+  flutter_barcode_scanner: ^2.0.0
+  csc_picker: ^0.2.6
+  flutter_credit_card: ^3.0.4
+  rflutter_alert: ^2.0.4
+  another_stepper: ^1.1.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  hooks_riverpod: ^2.1.1
+
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: coolvetica
+      fonts:
+        - asset: fonts/coolvetica_compressed_hv.otf
+        - asset: fonts/coolvetica_condensed_rg.otf
+        - asset: fonts/coolvetica_crammed_rg.otf
+        - asset: fonts/coolvetica_rg.otf
+        - asset: fonts/coolvetica_rg_it.otf
+          style: normal
+
+  assets:
+    - assets/
