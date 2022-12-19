@@ -45,6 +45,7 @@ class _EditCustomerState extends State<EditCustomer> {
           ),
           CustomBigButton(
               label: "Get Customer",
+              icon: Icons.search,
               onPressed: () {
                 setState(() {
                   result = FutureBuilder(
@@ -277,6 +278,7 @@ class _EditCustomerState extends State<EditCustomer> {
                                 ),
                                 CustomBigButton(
                                     label: "Delete User",
+                                    icon: Icons.delete,
                                     onPressed: () {
                                       print("IOWJFOIJAWOPIFJA");
                                       Alert(
@@ -292,7 +294,6 @@ class _EditCustomerState extends State<EditCustomer> {
                                                     fontSize: 20),
                                               ),
                                               onPressed: () {
-                                                print("OIEHGFpioeHEH");
                                                 Database.deleteUser(
                                                     id: data["UserID"]!);
                                                 Navigator.pop(context);

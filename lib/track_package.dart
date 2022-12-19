@@ -130,6 +130,7 @@ class _TrackPackageState extends State<TrackPackage> {
                 }),
             CustomBigButton(
                 label: "Get Customer",
+                icon: Icons.search,
                 onPressed: () {
                   setState(() {
                     result = FutureBuilder(

@@ -3,10 +3,12 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:test_db/EditCustomer.dart';
 import 'package:test_db/EditProfile.dart';
 import 'package:test_db/SendPackageUI.dart';
+import 'package:test_db/ReportsList.dart';
 import 'package:test_db/constants.dart';
 import 'package:test_db/track_package.dart';
 import 'HistoryPackage.dart';
 import 'PackageSummury.dart';
+import 'package:test_db/ProfileMenu.dart';
 import 'User.dart';
 
 // TODO NO NEED FOR THIS
@@ -27,7 +29,7 @@ class _MainState extends State<Main> {
     MyHomePage(),
     TrackPackage(),
     HistoryPackage(),
-    EditProfile()
+    ProfileMenu()
   ];
 
   @override
@@ -264,9 +266,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SendPackageUI(
-                              expressShipping: false,
-                            ),
+                            builder: (context) => const ReportsList(),
                           ),
                         );
                       },
@@ -284,7 +284,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 Text(
-                                  "Generate Report",
+                                  "Generate Reports",
                                   style: kHeading2TextStyle,
                                 ),
                               ],
