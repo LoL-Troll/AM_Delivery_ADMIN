@@ -74,7 +74,7 @@ class _HistoryPackageState extends State<HistoryPackage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Track Packages"),
+        title: Text("Previous Packages"),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -129,6 +129,7 @@ class _HistoryPackageState extends State<HistoryPackage> {
                 }),
             CustomBigButton(
                 label: "Get Customer",
+                icon: Icons.search,
                 onPressed: () {
                   setState(() {
                     result = FutureBuilder(

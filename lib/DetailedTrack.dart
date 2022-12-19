@@ -3,7 +3,9 @@ import 'package:another_stepper/widgets/another_stepper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql_client/mysql_client.dart';
+import 'package:test_db/NewTransportEvent.dart';
 import 'package:test_db/constants.dart';
+import 'package:test_db/customWidgets.dart';
 import 'database.dart';
 
 class DetailedTrack extends StatefulWidget {
@@ -21,21 +23,21 @@ class _DetailedTrackState extends State<DetailedTrack> {
   List<StepperData> items = [];
   int index = 0;
   var x;
+  late Iterable<ResultSetRow> trackDetails;
 
   _DetailedTrackState({required this.packageID});
 
   Future<List<StepperData>> getPackageDetails() async {
-    Iterable<ResultSetRow> result =
-        await Database.getTrackingDetails(packageID: packageID);
+    trackDetails = await Database.getTrackingDetails(packageID: packageID);
 
     items.add(StepperData(
         title: StepperText(
           "Order Placed",
-          textStyle: const TextStyle(
-            color: Colors.grey,
-          ),
+          textStyle: kHeading1TextStyle,
         ),
-        subtitle: StepperText("Your order has been placed"),
+        subtitle: StepperText(
+          "Your order has been placed",
+        ),
         iconWidget: Container(
           padding: const EdgeInsets.all(8),
           decoration: const BoxDecoration(
@@ -43,19 +45,20 @@ class _DetailedTrackState extends State<DetailedTrack> {
               borderRadius: BorderRadius.all(Radius.circular(30))),
           child: const Icon(Icons.home, color: Colors.white),
         )));
-
-    for (ResultSetRow r in result) {
+    for (ResultSetRow r in trackDetails) {
       index++;
       x = await Database.getHub(HubID: r.assoc()["DestinationHub"]);
       String activity = r.assoc()["Activity"]!;
+
       String eventType = r.assoc()["Type"]!;
       String hubType = x["Type"]!;
+
       String country = x["Country"]!;
       String city = x["City"]!;
       Icon icon;
 
       String sub;
-      sub = city + " " + country + "\n";
+      sub = city + ", " + country + "\n";
 
       if (activity == "In Transit") {
         icon = Icon(
@@ -108,14 +111,14 @@ class _DetailedTrackState extends State<DetailedTrack> {
       );
     }
 
-    if(x["Type"] == "Customer Address" && result.last.assoc()["Activity"]! == "Arrived"){
+    if (trackDetails.isNotEmpty &&
+        x["Type"] == "Customer Address" &&
+        trackDetails.last.assoc()["Activity"]! == "Arrived") {
       index++;
       items.add(StepperData(
           title: StepperText(
             "Delivered",
-            textStyle: const TextStyle(
-              color: Colors.black,
-            ),
+            textStyle: kHeading1TextStyle,
           ),
           subtitle: StepperText("Your order has been delivered"),
           iconWidget: Container(
@@ -125,14 +128,11 @@ class _DetailedTrackState extends State<DetailedTrack> {
                 borderRadius: BorderRadius.all(Radius.circular(30))),
             child: const Icon(Icons.check_outlined, color: Colors.white),
           )));
-    }
-    else{
+    } else {
       items.add(StepperData(
           title: StepperText(
             "Delivered",
-            textStyle: const TextStyle(
-              color: Colors.black,
-            ),
+            textStyle: kHeading1TextStyle,
           ),
           iconWidget: Container(
             padding: const EdgeInsets.all(8),
@@ -177,12 +177,57 @@ class _DetailedTrackState extends State<DetailedTrack> {
                 } else if (snapshot.hasData) {
                   // Extracting data from snapshot object
                   List<StepperData> data = snapshot.data!;
-                  return AnotherStepper(
-                    stepperList: data,
-                    stepperDirection: Axis.vertical,
-                    activeBarColor: kPrimaryColor,
-                    inActiveBarColor: Colors.black,
-                    activeIndex: index,
+                  print("VVVVVVVVVVVVVVVVVVVVVVVVVVV!!!");
+                  print(trackDetails);
+                  return Column(
+                    children: [
+                      (trackDetails.isEmpty ||
+                              trackDetails.last.assoc()["Status"] ==
+                                  "In Transit")
+                          ? CustomBigButton(
+                              label: (trackDetails.isNotEmpty &&
+                                      trackDetails.last.assoc()["Activity"] ==
+                                          "In Transit")
+                                  ? "Set Arrived"
+                                  : "Set New Route",
+                              icon: Icons.add,
+                              onPressed: () {
+                                setState(() {
+                                  index = 0;
+                                  items = [];
+                                  if (trackDetails.isNotEmpty &&
+                                      trackDetails.last.assoc()["Activity"] ==
+                                          "In Transit") {
+                                    Database.setActivityArrived(
+                                        scheduleNum: trackDetails.last
+                                            .assoc()["ScheduleNum"]);
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => NewTransportEvent(
+                                          packageID: packageID,
+                                        ),
+                                      ),
+                                    ).then(
+                                      (value) => setState(() {
+                                        index = 0;
+                                        items = [];
+                                      }),
+                                    );
+                                  }
+                                });
+                              },
+                            )
+                          : SizedBox(),
+                      AnotherStepper(
+                        stepperList: data,
+                        stepperDirection: Axis.vertical,
+                        activeBarColor: kPrimaryColor,
+                        inActiveBarColor: Colors.grey,
+                        activeIndex: index,
+                      ),
+                    ],
                   );
                 }
               }

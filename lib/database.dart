@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:encrypt/encrypt.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test_db/User.dart';
 
@@ -32,9 +33,16 @@ class Database {
     required String email,
     required String password,
   }) async {
+    /// Encrypting the password
+    final key = Key.fromUtf8('my 32 length key................');
+    final iv = IV.fromLength(16);
+
+    final encrypter = Encrypter(AES(key));
+    final encrypted = encrypter.encrypt(password, iv: iv);
+
     await getConnection().then((conn) => conn.execute("""
     INSERT INTO USER
-    VALUES(0, '$fName', '$lName', '$sex', '$phone', '$email', '$password', 'Admin')"""));
+    VALUES(0, '$fName', '$lName', '$sex', '$phone', '$email', '${encrypted.base64}', 'Admin')"""));
 
     var id = (await getConnection().then((conn) => conn.execute("""
     SELECT UserID
@@ -59,9 +67,16 @@ class Database {
     required String email,
     required String password,
   }) async {
+    /// Encrypting the password
+    final key = Key.fromUtf8('my 32 length key................');
+    final iv = IV.fromLength(16);
+
+    final encrypter = Encrypter(AES(key));
+    final encrypted = encrypter.encrypt(password, iv: iv);
+
     await getConnection().then((conn) => conn.execute("""
     INSERT INTO USER
-    VALUES(0, '$fName', '$lName', '$sex', '$phone', '$email', '$password', 'Customer')"""));
+    VALUES(0, '$fName', '$lName', '$sex', '$phone', '$email', '${encrypted.base64}', 'Customer')"""));
 
     var id = (await getConnection().then((conn) => conn.execute("""
     SELECT UserID
@@ -91,6 +106,9 @@ class Database {
     DateTime deliveryDate = DateTime.now().add(
       Duration(days: expressShipping ? 5 : 10),
     );
+    String sendDateString =
+        "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
+
     String deliveryDateString =
         "${deliveryDate.year}-${deliveryDate.month}-${deliveryDate.day}";
 
@@ -99,7 +117,7 @@ class Database {
         """
         INSERT INTO PACKAGE
         VALUES(0, 'In Transit', '$deliveryDateString', $width, $length, $height,
-        $weight, $val, '$catagory', ${User.getInstance().userId}, $reciverID, FALSE)""",
+        $weight, $val, '$catagory', ${User.getInstance().userId}, $reciverID, FALSE, '${sendDateString}')""",
       ),
     );
 
@@ -215,11 +233,21 @@ class Database {
 
   static Future<Map<String, String?>> loginUser(
       {required String email, required String password}) async {
+    /// Encrypting the password
+    final key = Key.fromUtf8('my 32 length key................');
+    final iv = IV.fromLength(16);
+
+    final encrypter = Encrypter(AES(key));
+    final encrypted = encrypter.encrypt(password, iv: iv);
+
     return (await getConnection().then((conn) => conn.execute("""
     SELECT *
     FROM USER JOIN ADMIN
     WHERE ADMIN.AdminID = USER.UserID
-    AND email = '$email' AND password = '$password'"""))).rows.first.assoc();
+    AND email = '$email' AND password = '${encrypted.base64}'""")))
+        .rows
+        .first
+        .assoc();
   }
 
   static Future<String?> getUserIDFromPhone({required String phone}) async {
@@ -254,9 +282,49 @@ class Database {
      SELECT *
      FROM USER
      WHERE UserID = $id;"""));
-    print(result.rows.first.assoc());
 
     return result.rows.first.assoc();
+  }
+
+  static Future<Iterable<ResultSetRow>> getAllPackages() async {
+    var result = await getConnection().then((conn) => conn.execute("""
+     SELECT *
+     FROM PACKAGE
+     """));
+
+    return result.rows;
+  }
+
+  static Future<Iterable<ResultSetRow>> getPackagesBetweenDates({
+    required String dateFrom,
+    required String dateTo,
+    required List<String> statuses,
+  }) async {
+    print(statuses.join(", "));
+    var result = await getConnection().then(
+      (conn) => conn.execute("""
+     SELECT *
+     FROM PACKAGE
+     WHERE PACKAGE.Sent_Date BETWEEN "$dateFrom" AND "$dateTo"
+     AND PACKAGE.Status in (${statuses.join(", ")})
+     """),
+    );
+
+    return result.rows;
+  }
+
+  static Future<Iterable<ResultSetRow>> getPackageTypesCount({
+    required String dateFrom,
+    required String dateTo,
+  }) async {
+    var result = await getConnection().then((conn) => conn.execute("""
+     SELECT Catagory, count(*) as Count
+     FROM PACKAGE
+     WHERE PACKAGE.Sent_Date BETWEEN "$dateFrom" AND "$dateTo"
+     GROUP BY CATAGORY
+     """));
+
+    return result.rows;
   }
 
   static Future<Map<String, String?>> getPackage(
@@ -320,10 +388,22 @@ class Database {
   static Future<Iterable<ResultSetRow>> getTrackingDetails(
       {required String? packageID}) async {
     var result = await getConnection().then((conn) => conn.execute("""
-     Select *
+    Select *
     FROM (PACKAGE p NATURAL JOIN TRANSPORTS t) NATURAL JOIN TRANSPORT_EVENT te NATURAL JOIN TRANSPORT_ACTIVITY ta
     WHERE p.PackageID = $packageID
     ORDER BY ScheduleNum asc ,Date asc, Activity desc"""));
+    return result.rows;
+  }
+
+  static Future<Iterable<ResultSetRow>> getTrackingByStatusLocation(
+      {required String city,
+      required List<String?> status,
+      required String category}) async {
+    var result = await getConnection().then((conn) => conn.execute("""
+    Select PackageID, max(ScheduleNum) as ScheduleNum, Status, Expected_Delivery_Date, SenderID, ReceiverID
+    FROM (PACKAGE p NATURAL JOIN TRANSPORTS t) NATURAL JOIN TRANSPORT_EVENT te NATURAL JOIN TRANSPORT_ACTIVITY ta JOIN HUB h
+    where DestinationHub = Hub_ID AND p.Status in (${status.join(", ")}) AND p.Catagory = '$category' AND h.City = '$city'
+    GROUP BY PackageID"""));
     return result.rows;
   }
 
@@ -333,6 +413,20 @@ class Database {
     FROM HUB
     Where Hub_ID = $HubID"""));
     return result.rows.first.assoc();
+  }
+
+  static Future<Iterable<ResultSetRow>> getAllHubsWithType({
+    required String type,
+    required String city,
+    required String country,
+  }) async {
+    var result = await getConnection().then((conn) => conn.execute("""
+    SELECT *
+    FROM HUB NATURAL JOIN ${type.toUpperCase().replaceAll(" ", "_")}
+    WHERE HUB.City = '$city' AND HUB.Country = '$country';
+    """));
+
+    return result.rows;
   }
 
   static Future modifyCustomerUser(User user) async {
@@ -353,10 +447,79 @@ class Database {
     String? password = user.password;
     String? id = user.userId;
 
+    /// Encrypting the password
+    final key = Key.fromUtf8('my 32 length key................');
+    final iv = IV.fromLength(16);
+
+    final encrypter = Encrypter(AES(key));
+    final encrypted = encrypter.encrypt(password!, iv: iv);
+
     var x = await getConnection().then((conn) => conn.execute("""
     UPDATE USER
-    SET Password = '$password'
+    SET Password = '${encrypted.base64}'
     WHERE UserID = $id"""));
+    user.password = encrypted.base64;
+  }
+
+  static void addActivityInTransit({
+    required String packageID,
+    required String tranportType,
+    required String destinationHubId,
+  }) async {
+    String? lastScheduleNum =
+        (await getConnection().then((conn) => conn.execute(""" 
+    SELECT max(ScheduleNum) as ScheduleNum
+    FROM TRANSPORTS
+    WHERE PackageID = $packageID;
+    """))).rows.first.assoc()["ScheduleNum"];
+
+    print(lastScheduleNum == null);
+
+    print(lastScheduleNum.toString());
+
+    String sourceHubID = lastScheduleNum == null // if there is no events
+        ? (await getConnection().then((conn) => conn.execute(""" 
+    SELECT Hub_ID 
+    FROM CUSTOMER_ADDRESS
+    WHERE CustomerID = (
+      SELECT SenderID
+      FROM PACKAGE
+      WHERE PackageID = $packageID
+    );
+    """))).rows.first.assoc()["Hub_ID"]! // if exist events
+        : (await getConnection().then((conn) => conn.execute(""" 
+    SELECT DestinationHub 
+    FROM TRANSPORT_EVENT
+    WHERE ScheduleNum = $lastScheduleNum;
+    """))).rows.first.assoc()["DestinationHub"]!;
+
+    await getConnection().then((conn) => conn.execute("""
+    INSERT INTO TRANSPORT_EVENT
+    VALUES(0, '$tranportType', $sourceHubID, $destinationHubId);
+    """));
+
+    String newScheduleNum =
+        (await getConnection().then((conn) => conn.execute("""
+    SELECT max(ScheduleNum) as ScheduleNum
+    FROM TRANSPORT_EVENT   
+    """))).rows.first.assoc()["ScheduleNum"]!;
+
+    await getConnection().then((conn) => conn.execute("""
+    INSERT INTO TRANSPORTS
+    VALUES($newScheduleNum, $packageID);
+    """));
+
+    await getConnection().then((conn) => conn.execute("""
+    INSERT INTO TRANSPORT_ACTIVITY
+    VALUES($newScheduleNum, 'In Transit', '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}');
+    """));
+  }
+
+  static void setActivityArrived({required scheduleNum}) async {
+    await getConnection().then((conn) => conn.execute("""
+    INSERT INTO TRANSPORT_ACTIVITY
+    VALUES('$scheduleNum', 'Arrived', '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}');
+    """));
   }
 
   static Future<Map<String, String?>> getCustomerAddress(
