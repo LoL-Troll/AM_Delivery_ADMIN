@@ -41,26 +41,28 @@ class _PackageSummaryState extends State<PackageSummury> {
   @override
   void initState() {
     super.initState();
-    Database.getPackage(packageID: packageID).then((value) {
-      setState(() {
-        packageInfo = value;
+    setState(() {
+      Database.getPackage(packageID: packageID).then((value) {
+        setState(() {
+          packageInfo = value;
 
-        Database.getUser(id: packageInfo["SenderID"]!).then((value) {
-          setState(() {
-            senderInfo = value;
+          Database.getUser(id: packageInfo["SenderID"]!).then((value) {
+            setState(() {
+              senderInfo = value;
+            });
           });
-        });
 
-        Database.getUser(id: packageInfo["ReceiverID"]!).then((value) {
-          setState(() {
-            receiverInfo = value;
+          Database.getUser(id: packageInfo["ReceiverID"]!).then((value) {
+            setState(() {
+              receiverInfo = value;
+            });
           });
-        });
 
-        deliveryCost = double.parse(packageInfo['Weight']!) * 0.5 +
-            double.parse(packageInfo['Length']!) * 0.3 +
-            double.parse(packageInfo['Width']!) * 0.3;
-        insurance = 0.3 * double.parse(packageInfo["item_Value"]!);
+          deliveryCost = double.parse(packageInfo['Weight']!) * 0.5 +
+              double.parse(packageInfo['Length']!) * 0.3 +
+              double.parse(packageInfo['Width']!) * 0.3;
+          insurance = 0.3 * double.parse(packageInfo["item_Value"]!);
+        });
       });
     });
   }
@@ -224,7 +226,13 @@ class _PackageSummaryState extends State<PackageSummury> {
                           packageID: packageID,
                         ),
                       ),
-                    );
+                    ).then((value) => setState((){
+                      Database.getPackage(packageID: packageID).then((value) {
+                        setState(() {
+                          packageInfo = value;
+                        });
+                      });
+                    }));
                   }),
             ],
           ),

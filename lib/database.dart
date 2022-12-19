@@ -339,6 +339,26 @@ class Database {
     return result.rows.first.assoc();
   }
 
+  static Future<String?> getReceiverIDByPackageID(
+      {required String packageID}) async {
+    var result = await getConnection().then((conn) => conn.execute("""
+     SELECT *
+     FROM PACKAGE
+     WHERE PackageID = $packageID;"""));
+    print("DB");
+    print(result.rows.first.assoc());
+
+    String customerId = result.rows.first.assoc()["ReceiverID"]!;
+
+    var x = await getConnection().then((conn) => conn.execute("""
+    Select *
+    FROM CUSTOMER NATURAL JOIN CUSTOMER_ADDRESS NATURAL JOIN HUB
+    Where CustomerID = $customerId;"""));
+
+
+    return x.rows.first.assoc()["Hub_ID"];
+  }
+
   static Future<Iterable<ResultSetRow>> getSentOrReceivedPackgesInTransit({
     required String? userID,
     bool sent = false,
@@ -413,6 +433,18 @@ class Database {
     FROM HUB
     Where Hub_ID = $HubID"""));
     return result.rows.first.assoc();
+  }
+
+  static Future<String> getCustomerEmail({required String? packageID}) async {
+    var result = await getConnection().then((conn) => conn.execute("""
+    Select ReceiverID
+    FROM PACKAGE
+    Where PackageID = $packageID"""));
+
+    var user = await getUser(id: result.rows.first.assoc()["ReceiverID"]!);
+    String email = user["Email"]!;
+
+    return email;
   }
 
   static Future<Iterable<ResultSetRow>> getAllHubsWithType({
@@ -520,6 +552,7 @@ class Database {
     INSERT INTO TRANSPORT_ACTIVITY
     VALUES('$scheduleNum', 'Arrived', '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}');
     """));
+
   }
 
   static Future<Map<String, String?>> getCustomerAddress(
@@ -537,6 +570,21 @@ class Database {
     UPDATE PACKAGE
     SET Payment_Status = 1
     WHERE PackageID = $packageID"""));
+  }
+
+  static Future setStatusPackage({required String packageID, required String status}) async {
+    var x = await getConnection().then((conn) => conn.execute("""
+    UPDATE PACKAGE
+    SET Status = '$status'
+    WHERE PackageID = $packageID"""));
+  }
+
+  static Future setPackageStatusDelivered({required String packageID}) async {
+    var x = await getConnection().then((conn) => conn.execute("""
+    UPDATE PACKAGE
+    SET Status = 'Delivered'
+    WHERE PackageID = $packageID"""));
+    print("HELLO");
   }
 
   static Future deleteUser({required String id}) async {
