@@ -136,7 +136,7 @@ class _DetailedTrackState extends State<DetailedTrack> {
       );
     }
 
-    if (trackDetails.last.assoc()["Status"]! == "Lost") {
+    if (trackDetails.isNotEmpty && trackDetails.last.assoc()["Status"]! == "Lost") {
       cannotEdit = true;
       index++;
       items.add(StepperData(
@@ -152,7 +152,7 @@ class _DetailedTrackState extends State<DetailedTrack> {
             child:
                 const Icon(Icons.question_mark_outlined, color: Colors.white),
           )));
-    } else if (trackDetails.last.assoc()["Status"]! == "Damaged") {
+    } else if (trackDetails.isNotEmpty && trackDetails.last.assoc()["Status"]! == "Damaged") {
       cannotEdit = true;
       index++;
       items.add(StepperData(
@@ -167,7 +167,7 @@ class _DetailedTrackState extends State<DetailedTrack> {
                 borderRadius: BorderRadius.all(Radius.circular(30))),
             child: const Icon(Icons.broken_image_outlined, color: Colors.white),
           )));
-    } else if (trackDetails.last.assoc()["Status"]! == "Delayed") {
+    } else if (trackDetails.isNotEmpty && trackDetails.last.assoc()["Status"]! == "Delayed") {
       cannotEdit = true;
       index++;
       items.add(StepperData(
