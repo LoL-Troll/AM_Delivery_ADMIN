@@ -1,16 +1,15 @@
-# am_delivery_admin
+# AM delivery - Admin Application
 
-A new Flutter project.
+Package delivery application. 
+Supports creating admin accounts, monitoring package route, generating reports, updating package status, modifying customers' information, viewing package summary, scanning package barcode, viewing package history of a customer, and more.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+This is the admin application.
+Customer application can be found [here](https://github.com/LoL-Troll/AM_Delivery) 
+The report for this project can be found [here](https://drive.google.com/file/d/1rXjcCzdZAjpLD3AFnaSbMIFxf4v12yF0/view?usp=sharing)
 
-A few resources to get you started if this is your first Flutter project:
+This project was done for a database course (ICS321).
+Written using Flutter framework. 
+Database impelemented using mySQL.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Devoloped by Ahmad Alkhabbaz & Majed Bamardouf
