@@ -1,6 +1,6 @@
 # AM delivery - Admin Application
 
-## Package delivery application. 
+## Package delivery application. (Admin)
 Supports creating admin accounts, monitoring package route, generating reports, updating package status, modifying customers' information, viewing package summary, scanning package barcode, viewing package history of a customer, and more.
 
 
